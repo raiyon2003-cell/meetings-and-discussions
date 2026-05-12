@@ -19,9 +19,15 @@ import searchRouter from './routes/search.js';
 
 const app = express();
 
+/** Comma-separated: local + production frontends (e.g. http://localhost:5173,https://xxx.vercel.app) */
+const corsOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: corsOrigins.length ? corsOrigins : true,
     credentials: true,
   }),
 );

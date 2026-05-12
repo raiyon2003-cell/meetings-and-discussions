@@ -25,7 +25,13 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (r) => r,
   (err) => {
-    const msg = err.response?.data?.message || err.message || 'Request failed';
+    let msg = err.response?.data?.message || err.message || 'Request failed';
+    const code = (err as { code?: string }).code;
+    if (code === 'ERR_NETWORK' || msg === 'Network Error') {
+      const apiRoot = import.meta.env.VITE_API_URL || '(not set)';
+      msg =
+        `Cannot reach API (${apiRoot}). Production: set VITE_API_URL to your Render URL in Vercel env and redeploy.`;
+    }
     return Promise.reject(new Error(msg));
   },
 );

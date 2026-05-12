@@ -2,24 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * SegWitz UI — aligned to Brand Guideline PDF
+ * Typeface: Source Sans Pro family → Source Sans 3 (web)
+ * Palette: Steel Teal #28666e, Deep Teal #073b4c, Charcoal Green #344e41,
+ *          Muted Olive #819171, Light Lime #588157, Platinum (light mod)
+ */
+
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Platinum light mod background */
+    --background: 40 12% 94%;
+    --foreground: 152 22% 18%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --primary: 221 83% 40%;
-    --primary-foreground: 210 40% 98%;
-    --ring: 221 83% 40%;
+    --card-foreground: 152 22% 18%;
+    /* Muted surfaces — olive-tinted neutrals */
+    --muted: 152 10% 90%;
+    --muted-foreground: 88 12% 38%;
+    --border: 152 14% 84%;
+    --input: 152 14% 84%;
+    /* Primary actions — Steel Teal */
+    --primary: 186 47% 29%;
+    --primary-foreground: 180 25% 98%;
+    --ring: 186 47% 35%;
     --radius: 0.5rem;
+    /* Accent / success highlights — Light Lime Green */
+    --accent: 118 19% 42%;
+    --accent-foreground: 180 25% 98%;
+    /* Sidebar / night mod — Deep Teal Blue */
+    --sidebar: 192 83% 16%;
+    --sidebar-foreground: 180 25% 96%;
+    --sidebar-muted: 180 15% 70%;
+    --sidebar-active: 186 47% 32%;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans;
     margin: 0;
     min-height: 100vh;
   }

@@ -48,13 +48,17 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
-      <aside className="hidden w-64 flex-shrink-0 border-r border-border bg-card md:flex md:flex-col">
-        <div className="border-b border-border px-6 py-5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">SegWitz</div>
-          <div className="mt-1 text-lg font-semibold text-foreground">Meeting & Decision Repository</div>
+    <div className="flex min-h-screen bg-background">
+      {/* Brand: Night Forest / Deep Teal sidebar (dark mod per guideline) */}
+      <aside className="hidden w-64 flex-shrink-0 border-r border-white/10 bg-sidebar text-sidebar-foreground shadow-brand md:flex md:flex-col">
+        <div className="border-b border-white/10 px-6 py-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-light-lime">SegWitz</div>
+          <div className="mt-1.5 text-base font-semibold leading-snug text-sidebar-foreground">
+            Meeting &amp; Decision Repository
+          </div>
+          <div className="mt-3 h-0.5 w-10 rounded-full bg-brand-steel-teal" aria-hidden />
         </div>
-        <nav className="flex flex-1 flex-col gap-1 p-3">
+        <nav className="flex flex-1 flex-col gap-0.5 p-3">
           {filteredNav.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -62,20 +66,27 @@ export function AppLayout() {
               end={to === '/'}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition-colors',
+                  isActive
+                    ? 'bg-sidebar-active text-white shadow-sm'
+                    : 'text-sidebar-muted hover:bg-white/10 hover:text-sidebar-foreground',
                 )
               }
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0 opacity-90" />
               {label}
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-border p-4">
-          <div className="mb-3 truncate text-sm font-medium">{profile?.full_name ?? 'User'}</div>
-          <div className="mb-3 truncate text-xs text-muted-foreground">{profile?.role?.name ?? '—'}</div>
-          <Button variant="outline" size="sm" className="w-full" onClick={() => void handleLogout()}>
+        <div className="border-t border-white/10 bg-black/10 p-4">
+          <div className="mb-1 truncate text-sm font-semibold text-sidebar-foreground">{profile?.full_name ?? 'User'}</div>
+          <div className="mb-3 truncate text-xs text-sidebar-muted">{profile?.role?.name ?? '—'}</div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full border-white/25 bg-transparent text-sidebar-foreground hover:bg-white/10 hover:text-white"
+            onClick={() => void handleLogout()}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             Log out
           </Button>
@@ -83,9 +94,14 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
-          <span className="font-semibold">SegWitz</span>
-          <Button variant="ghost" size="sm" onClick={() => void handleLogout()}>
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-sidebar px-4 py-3 text-sidebar-foreground shadow-sm md:hidden">
+          <span className="font-semibold tracking-tight">SegWitz</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-sidebar-foreground hover:bg-white/10 hover:text-white"
+            onClick={() => void handleLogout()}
+          >
             <LogOut className="h-4 w-4" />
           </Button>
         </header>
