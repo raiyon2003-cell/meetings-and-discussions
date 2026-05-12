@@ -71,7 +71,7 @@ router.get('/', validateQuery(listQuerySchema), async (req, res, next) => {
 
     let query = supabaseAdmin
       .from('action_items')
-      .select('*', { count: 'exact' })
+      .select('id,title,priority,due_date,status,meeting_id,decision_id,assigned_to,created_by', { count: 'exact' })
       .order('due_date', { ascending: true });
 
     query = scopeActionsQuery(query, req.profile);
@@ -98,19 +98,20 @@ router.get('/', validateQuery(listQuerySchema), async (req, res, next) => {
     if (error) throw httpError(400, error.message);
 
     const rows = data || [];
-    const meetingsCache = new Map();
-    const decisionsCache = new Map();
+    const mIds = [...new Set(rows.map((r) => r.meeting_id).filter(Boolean))];
+    const dIds = [...new Set(rows.map((r) => r.decision_id).filter(Boolean))];
 
-    for (const a of rows) {
-      if (a.meeting_id && !meetingsCache.has(a.meeting_id)) {
-        const { data: m } = await supabaseAdmin.from('meetings').select('*').eq('id', a.meeting_id).single();
-        if (m) meetingsCache.set(a.meeting_id, m);
-      }
-      if (a.decision_id && !decisionsCache.has(a.decision_id)) {
-        const { data: d } = await supabaseAdmin.from('decisions').select('*').eq('id', a.decision_id).single();
-        if (d) decisionsCache.set(a.decision_id, d);
-      }
-    }
+    const [mRes, dRes] = await Promise.all([
+      mIds.length
+        ? supabaseAdmin.from('meetings').select('id,department_id,owner_id,meeting_type').in('id', mIds)
+        : Promise.resolve({ data: [] }),
+      dIds.length
+        ? supabaseAdmin.from('decisions').select('id,department_id').in('id', dIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const meetingsCache = new Map((mRes.data || []).map((m) => [m.id, m]));
+    const decisionsCache = new Map((dRes.data || []).map((d) => [d.id, d]));
 
     const filtered = [];
     for (const a of rows) {

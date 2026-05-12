@@ -66,7 +66,7 @@ router.get('/', validateQuery(listQuerySchema), async (req, res, next) => {
 
     let query = supabaseAdmin
       .from('meetings')
-      .select('*', { count: 'exact' })
+      .select('id,title,meeting_type,scheduled_at,status,department_id,division_id,owner_id,created_at', { count: 'exact' })
       .order(sortField, { ascending: order === 'asc', nullsFirst: false });
 
     query = scopeMeetingsQuery(query, req.profile);

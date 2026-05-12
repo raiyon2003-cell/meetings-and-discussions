@@ -8,6 +8,10 @@ import { canReadMeeting, canReadDecision, canReadAction } from '../lib/access.js
 const router = Router();
 router.use(authenticate);
 
+const MEETING_SEARCH_COL = 'id,title,meeting_type,scheduled_at,status,department_id,division_id,owner_id';
+const DECISION_SEARCH_COL = 'id,title,status,date_decided,department_id,division_id,owner_id,meeting_id';
+const ACTION_SEARCH_COL = 'id,title,status,priority,due_date,meeting_id,decision_id,assigned_to';
+
 const searchQuerySchema = z.object({
   keyword: z.string().optional(),
   division_id: z.string().uuid().optional(),
@@ -29,9 +33,9 @@ router.get('/', validateQuery(searchQuerySchema), async (req, res, next) => {
     const limit = Math.min(50, q.limit || 25);
     const profile = req.profile;
 
-    let meetingsQ = supabaseAdmin.from('meetings').select('*').limit(limit);
-    let decisionsQ = supabaseAdmin.from('decisions').select('*').limit(limit);
-    let actionsQ = supabaseAdmin.from('action_items').select('*').limit(limit);
+    let meetingsQ = supabaseAdmin.from('meetings').select(MEETING_SEARCH_COL).limit(limit);
+    let decisionsQ = supabaseAdmin.from('decisions').select(DECISION_SEARCH_COL).limit(limit);
+    let actionsQ = supabaseAdmin.from('action_items').select(ACTION_SEARCH_COL).limit(limit);
 
     if (q.keyword) {
       meetingsQ = meetingsQ.or(
@@ -85,18 +89,26 @@ router.get('/', validateQuery(searchQuerySchema), async (req, res, next) => {
     const meetings = (meetingsRaw || []).filter((m) => canReadMeeting(profile, m));
     const decisions = (decisionsRaw || []).filter((d) => canReadDecision(profile, d));
 
+    const actionRows = actionsRaw || [];
+    const mIds = [...new Set(actionRows.map((a) => a.meeting_id).filter(Boolean))];
+    const dIds = [...new Set(actionRows.map((a) => a.decision_id).filter(Boolean))];
+
+    const [mRes, dRes] = await Promise.all([
+      mIds.length
+        ? supabaseAdmin.from('meetings').select('id,department_id,owner_id,meeting_type').in('id', mIds)
+        : Promise.resolve({ data: [] }),
+      dIds.length
+        ? supabaseAdmin.from('decisions').select('id,department_id').in('id', dIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const meetingMap = new Map((mRes.data || []).map((m) => [m.id, m]));
+    const decisionMap = new Map((dRes.data || []).map((d) => [d.id, d]));
+
     const actions = [];
-    for (const a of actionsRaw || []) {
-      let meeting;
-      let decision;
-      if (a.meeting_id) {
-        const { data } = await supabaseAdmin.from('meetings').select('*').eq('id', a.meeting_id).maybeSingle();
-        meeting = data;
-      }
-      if (a.decision_id) {
-        const { data } = await supabaseAdmin.from('decisions').select('*').eq('id', a.decision_id).maybeSingle();
-        decision = data;
-      }
+    for (const a of actionRows) {
+      const meeting = a.meeting_id ? meetingMap.get(a.meeting_id) : null;
+      const decision = a.decision_id ? decisionMap.get(a.decision_id) : null;
       if (canReadAction(profile, a, meeting, decision)) actions.push(a);
     }
 

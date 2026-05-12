@@ -9,21 +9,24 @@ import type { Decision } from '@/types/models';
 import { DECISION_STATUS, labelFrom } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
 import { useState } from 'react';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export function DecisionsPage() {
   const role = useAuthStore((s) => s.profile?.role?.slug);
   const canCreate = role && !['view_only', 'management', 'team_member'].includes(role);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 400);
 
-  const { data } = useQuery({
-    queryKey: ['decisions', search, status],
+  const { data, isLoading } = useQuery({
+    queryKey: ['decisions', debouncedSearch, status],
     queryFn: async () => {
       const { data: body } = await api.get<{ data: Decision[] }>('/decisions', {
-        params: { search: search || undefined, status: status || undefined, limit: 50 },
+        params: { search: debouncedSearch || undefined, status: status || undefined, limit: 50 },
       });
       return body.data;
     },
+    placeholderData: (prev) => prev,
   });
 
   return (
@@ -61,6 +64,9 @@ export function DecisionsPage() {
       </div>
 
       <div className="rounded-md border border-border bg-card">
+        {isLoading && !data ? (
+          <div className="p-8 text-center text-muted-foreground">Loading…</div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -87,6 +93,7 @@ export function DecisionsPage() {
             ))}
           </TableBody>
         </Table>
+        )}
       </div>
     </div>
   );

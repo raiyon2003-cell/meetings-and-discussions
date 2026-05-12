@@ -10,19 +10,21 @@ import type { Meeting } from '@/types/models';
 import { labelFrom, MEETING_TYPES, MEETING_STATUS } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
 import { useState } from 'react';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export function MeetingsPage() {
   const role = useAuthStore((s) => s.profile?.role?.slug);
   const canCreate = role && !['view_only', 'management', 'team_member'].includes(role);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('');
+  const debouncedSearch = useDebouncedValue(search, 400);
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['meetings', search, status],
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['meetings', debouncedSearch, status],
     queryFn: async () => {
       const { data: body } = await api.get<{ data: Meeting[] }>('/meetings', {
         params: {
-          search: search || undefined,
+          search: debouncedSearch || undefined,
           status: status || undefined,
           sort: 'scheduled_at',
           order: 'desc',
@@ -31,6 +33,7 @@ export function MeetingsPage() {
       });
       return body.data;
     },
+    placeholderData: (prev) => prev,
   });
 
   return (
@@ -64,12 +67,12 @@ export function MeetingsPage() {
             </option>
           ))}
         </select>
-        <Button type="button" variant="outline" onClick={() => void refetch()}>
-          Apply
+        <Button type="button" variant="outline" onClick={() => void refetch()} disabled={isFetching}>
+          {isFetching ? 'Refreshing…' : 'Refresh'}
         </Button>
       </div>
 
-      {isLoading ? (
+      {isLoading && !data ? (
         <div className="text-muted-foreground">Loading…</div>
       ) : (
         <div className="rounded-md border border-border bg-card">

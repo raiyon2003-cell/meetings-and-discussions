@@ -19,6 +19,8 @@ export function ActionsPage() {
       const { data: body } = await api.get<{ data: ActionItem[] }>('/action-items', { params: { limit: 80 } });
       return body.data;
     },
+    staleTime: 45_000,
+    placeholderData: (prev) => prev,
   });
 
   const today = new Date().toISOString().slice(0, 10);

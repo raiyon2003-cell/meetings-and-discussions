@@ -57,7 +57,7 @@ router.get('/', validateQuery(listQuerySchema), async (req, res, next) => {
 
     let query = supabaseAdmin
       .from('decisions')
-      .select('*', { count: 'exact' })
+      .select('id,title,status,date_decided,department_id,division_id,owner_id,meeting_id,created_at', { count: 'exact' })
       .order('created_at', { ascending: false });
 
     query = scopeDecisionsQuery(query, req.profile);

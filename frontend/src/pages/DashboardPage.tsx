@@ -1,24 +1,16 @@
+import { lazy, Suspense, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Meeting, Decision } from '@/types/models';
 import { labelFrom, MEETING_TYPES } from '@/constants/enums';
+import { PageLoading } from '@/components/PageLoading';
+
+const DashboardCharts = lazy(() => import('./dashboard/DashboardCharts'));
 
 type Summary = {
   totals: {
@@ -36,43 +28,44 @@ type Summary = {
   actions_by_department: Record<string, number>;
 };
 
-const COLORS = ['#1d4ed8', '#059669', '#d97706', '#dc2626', '#7c3aed'];
-
 export function DashboardPage() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, isPlaceholderData } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: async () => {
       const { data: res } = await api.get<Summary>('/dashboard/summary');
       return res;
     },
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    placeholderData: (prev) => prev,
   });
 
-  if (isLoading) return <div className="text-muted-foreground">Loading dashboard…</div>;
+  const summaryCards = useMemo(() => {
+    if (!data) return [];
+    return [
+      { label: 'Total meetings', value: data.totals.meetings },
+      { label: 'Finalized meetings', value: data.totals.meetings_finalized },
+      { label: 'Total decisions', value: data.totals.decisions },
+      { label: 'Approved decisions', value: data.totals.decisions_approved },
+      { label: 'Pending decisions', value: data.totals.decisions_pending },
+      { label: 'Proposed decisions', value: data.totals.decisions_proposed },
+      { label: 'Overdue actions', value: data.totals.actions_overdue },
+    ];
+  }, [data]);
+
+  if (isLoading && !data) {
+    return <PageLoading />;
+  }
   if (error) return <div className="text-red-600">{(error as Error).message}</div>;
   if (!data) return null;
 
-  const ownerChart = Object.entries(data.actions_by_owner).map(([id, count]) => ({
-    name: id.slice(0, 8) + '…',
-    count,
-  }));
-
-  const deptChart = Object.entries(data.actions_by_department).map(([id, count]) => ({
-    name: id.slice(0, 8),
-    count,
-  }));
-
-  const summaryCards = [
-    { label: 'Total meetings', value: data.totals.meetings },
-    { label: 'Finalized meetings', value: data.totals.meetings_finalized },
-    { label: 'Total decisions', value: data.totals.decisions },
-    { label: 'Approved decisions', value: data.totals.decisions_approved },
-    { label: 'Pending decisions', value: data.totals.decisions_pending },
-    { label: 'Proposed decisions', value: data.totals.decisions_proposed },
-    { label: 'Overdue actions', value: data.totals.actions_overdue },
-  ];
-
   return (
     <div className="space-y-8">
+      {isPlaceholderData && (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          Refreshing…
+        </p>
+      )}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Operational dashboard</h1>
         <p className="text-muted-foreground">Meetings, decisions, and accountability at a glance.</p>
@@ -89,42 +82,12 @@ export function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions by assignee (sample)</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ownerChart}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#1d4ed8" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions by department</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={deptChart} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
-                  {deptChart.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      <Suspense fallback={<PageLoading />}>
+        <DashboardCharts
+          actionsByOwner={data.actions_by_owner}
+          actionsByDepartment={data.actions_by_department}
+        />
+      </Suspense>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

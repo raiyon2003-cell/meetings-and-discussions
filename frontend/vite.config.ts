@@ -17,4 +17,23 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('recharts')) return 'recharts';
+          if (id.includes('@tanstack/react-query')) return 'tanstack-query';
+          if (id.includes('@supabase')) return 'supabase';
+          if (id.includes('react-router')) return 'react-router';
+          if (id.includes('react-dom') || id.includes('/react/')) return 'react-core';
+          if (id.includes('axios')) return 'axios';
+          if (id.includes('lucide-react')) return 'lucide';
+          if (id.includes('@radix-ui')) return 'radix';
+          return 'vendor';
+        },
+      },
+    },
+    chunkSizeWarningLimit: 700,
+  },
 });
