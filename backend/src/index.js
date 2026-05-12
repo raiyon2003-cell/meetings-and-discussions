@@ -25,9 +25,29 @@ const corsOrigins = (process.env.FRONTEND_URL || '')
   .map((s) => s.trim())
   .filter(Boolean);
 
+const allowVercelPreviewOrigins = process.env.CORS_ALLOW_VERCEL_PREVIEWS === 'true';
+
+function corsAllowsOrigin(origin) {
+  if (!corsOrigins.length) return true;
+  if (!origin) return true;
+  if (corsOrigins.includes(origin)) return true;
+  if (allowVercelPreviewOrigins) {
+    try {
+      const u = new URL(origin);
+      if (u.protocol === 'https:' && u.hostname.endsWith('.vercel.app')) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
+}
+
 app.use(
   cors({
-    origin: corsOrigins.length ? corsOrigins : true,
+    origin(origin, callback) {
+      if (corsAllowsOrigin(origin)) callback(null, true);
+      else callback(null, false);
+    },
     credentials: true,
   }),
 );

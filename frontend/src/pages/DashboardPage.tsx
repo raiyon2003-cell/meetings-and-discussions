@@ -56,7 +56,22 @@ export function DashboardPage() {
   if (isLoading && !data) {
     return <PageLoading />;
   }
-  if (error) return <div className="text-red-600">{(error as Error).message}</div>;
+  if (error) {
+    const message = (error as Error).message;
+    return (
+      <Card className="border-destructive/40 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-destructive">Dashboard could not load</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Data comes from your Render API. Fix the configuration below, then refresh this page.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <p className="whitespace-pre-wrap text-sm text-foreground">{message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
   if (!data) return null;
 
   return (
