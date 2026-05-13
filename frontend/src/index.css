@@ -3,46 +3,99 @@
 @tailwind utilities;
 
 /**
- * SegWitz UI — aligned to Brand Guideline PDF
- * Typeface: Source Sans Pro family → Source Sans 3 (web)
- * Palette: Steel Teal #28666e, Deep Teal #073b4c, Charcoal Green #344e41,
- *          Muted Olive #819171, Light Lime #588157, Platinum (light mod)
+ * SegWitz — enterprise UI tokens (light + dark)
+ * Typeface: Source Sans 3
  */
 
 @layer base {
   :root {
-    /* Platinum light mod background */
-    --background: 40 12% 94%;
-    --foreground: 152 22% 18%;
+    --background: 40 14% 96%;
+    --foreground: 152 22% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 152 22% 18%;
-    /* Muted surfaces — olive-tinted neutrals */
-    --muted: 152 10% 90%;
-    --muted-foreground: 88 12% 38%;
-    --border: 152 14% 84%;
-    --input: 152 14% 84%;
-    /* Primary actions — Steel Teal */
-    --primary: 186 47% 29%;
+    --card-foreground: 152 22% 16%;
+    --muted: 152 12% 92%;
+    --muted-foreground: 152 10% 38%;
+    --border: 152 12% 86%;
+    --input: 152 12% 86%;
+    --primary: 186 47% 28%;
     --primary-foreground: 180 25% 98%;
-    --ring: 186 47% 35%;
-    --radius: 0.5rem;
-    /* Accent / success highlights — Light Lime Green */
-    --accent: 118 19% 42%;
+    --ring: 186 47% 36%;
+    --radius: 0.625rem;
+    --accent: 118 19% 40%;
     --accent-foreground: 180 25% 98%;
-    /* Sidebar / night mod — Deep Teal Blue */
-    --sidebar: 192 83% 16%;
-    --sidebar-foreground: 180 25% 96%;
-    --sidebar-muted: 180 15% 70%;
-    --sidebar-active: 186 47% 32%;
+    --sidebar: 192 78% 14%;
+    --sidebar-foreground: 180 25% 97%;
+    --sidebar-muted: 186 18% 72%;
+    --sidebar-active: 186 42% 30%;
+    --shadow-color: 192 40% 20%;
+  }
+
+  .dark {
+    --background: 222 24% 7%;
+    --foreground: 210 25% 96%;
+    --card: 222 22% 10%;
+    --card-foreground: 210 25% 96%;
+    --muted: 217 20% 16%;
+    --muted-foreground: 215 14% 62%;
+    --border: 217 18% 20%;
+    --input: 217 18% 20%;
+    --primary: 186 42% 42%;
+    --primary-foreground: 192 85% 8%;
+    --ring: 186 45% 48%;
+    --accent: 118 22% 38%;
+    --accent-foreground: 180 25% 98%;
+    --sidebar: 192 45% 8%;
+    --sidebar-foreground: 186 15% 94%;
+    --sidebar-muted: 186 14% 58%;
+    --sidebar-active: 186 38% 26%;
+    --shadow-color: 222 40% 4%;
+  }
+
+  html {
+    @apply scroll-smooth;
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-sans;
+    @apply bg-background text-foreground antialiased font-sans transition-colors duration-200;
     margin: 0;
     min-height: 100vh;
   }
 
   #root {
     min-height: 100vh;
+  }
+}
+
+@layer components {
+  .select-native {
+    @apply flex h-10 w-full cursor-pointer appearance-none rounded-md border border-input bg-background px-3 pr-9 text-sm text-foreground shadow-sm transition-[border-color,box-shadow] duration-150;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    background-size: 1rem;
+  }
+
+  .dark .select-native {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+
+  .link-subtle {
+    @apply font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline;
+  }
+
+  .surface-table {
+    @apply overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm dark:border-border/80 dark:shadow-none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -1,16 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw, Calendar } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Meeting } from '@/types/models';
 import { labelFrom, MEETING_TYPES, MEETING_STATUS } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
 import { useState } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { PageHeader } from '@/components/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { StatusBadge } from '@/components/StatusBadge';
+import { PageLoading } from '@/components/PageLoading';
 
 export function MeetingsPage() {
   const role = useAuthStore((s) => s.profile?.role?.slug);
@@ -37,29 +40,30 @@ export function MeetingsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Meetings</h1>
-          <p className="text-muted-foreground">Create, finalize, and trace operational discussions.</p>
-        </div>
-        {canCreate && (
-          <Button asChild>
-            <Link to="/meetings/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New meeting
-            </Link>
-          </Button>
-        )}
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Meetings"
+        description="Create, finalize, and trace operational discussions across the organization."
+        actions={
+          canCreate ? (
+            <Button asChild className="shadow-sm">
+              <Link to="/meetings/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New meeting
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <div className="flex flex-wrap gap-3">
-        <Input placeholder="Search title…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
+      <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/50 p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
+        <Input
+          placeholder="Search by title…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-md bg-background/80"
+        />
+        <select className="select-native w-full sm:max-w-[200px]" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           {MEETING_STATUS.map((s) => (
             <option key={s.value} value={s.value}>
@@ -67,38 +71,41 @@ export function MeetingsPage() {
             </option>
           ))}
         </select>
-        <Button type="button" variant="outline" onClick={() => void refetch()} disabled={isFetching}>
+        <Button type="button" variant="outline" className="shrink-0 gap-2" onClick={() => void refetch()} disabled={isFetching}>
+          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden />
           {isFetching ? 'Refreshing…' : 'Refresh'}
         </Button>
       </div>
 
       {isLoading && !data ? (
-        <div className="text-muted-foreground">Loading…</div>
+        <PageLoading />
       ) : (
-        <div className="rounded-md border border-border bg-card">
+        <div className="surface-table">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead className="hidden lg:table-cell">Type</TableHead>
                 <TableHead>Scheduled</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead />
+                <TableHead className="w-[88px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {(data || []).map((m) => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.title}</TableCell>
-                  <TableCell>{labelFrom(MEETING_TYPES, m.meeting_type)}</TableCell>
-                  <TableCell>{new Date(m.scheduled_at).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge variant={m.status === 'finalized' ? 'success' : 'secondary'}>
-                      {labelFrom(MEETING_STATUS, m.status)}
-                    </Badge>
+                  <TableCell className="max-w-[200px] truncate font-medium lg:max-w-none">{m.title}</TableCell>
+                  <TableCell className="hidden text-muted-foreground lg:table-cell">
+                    {labelFrom(MEETING_TYPES, m.meeting_type)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {new Date(m.scheduled_at).toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    <Link className="text-primary hover:underline" to={`/meetings/${m.id}`}>
+                    <StatusBadge kind="meeting" value={m.status} />
+                  </TableCell>
+                  <TableCell>
+                    <Link className="link-subtle text-sm" to={`/meetings/${m.id}`}>
                       Open
                     </Link>
                   </TableCell>
@@ -106,7 +113,15 @@ export function MeetingsPage() {
               ))}
             </TableBody>
           </Table>
-          {!data?.length && <div className="p-6 text-center text-muted-foreground">No meetings found.</div>}
+          {!data?.length && (
+            <div className="border-t border-border/60 p-6">
+              <EmptyState
+                icon={Calendar}
+                title="No meetings found"
+                description="Try adjusting filters or create a new meeting to get started."
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

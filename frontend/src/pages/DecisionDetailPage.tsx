@@ -3,13 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { ActionItem, Attachment, Decision, Meeting } from '@/types/models';
-import { DECISION_STATUS, labelFrom } from '@/constants/enums';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/authStore';
+import { PageLoading } from '@/components/PageLoading';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type Detail = {
   decision: Decision;
@@ -64,24 +64,22 @@ export function DecisionDetailPage() {
     window.open(data.url, '_blank', 'noopener,noreferrer');
   }
 
-  if (isLoading || !data) return <div className="text-muted-foreground">Loading…</div>;
+  if (isLoading || !data) return <PageLoading />;
 
   const d = data.decision;
   const canEdit = role && !['view_only', 'management', 'team_member'].includes(role);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{d.title}</h1>
-          <Badge className="mt-2" variant="outline">
-            {labelFrom(DECISION_STATUS, d.status)}
-          </Badge>
+    <div className="space-y-10">
+      <div className="flex flex-col gap-6 border-b border-border/60 pb-8 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{d.title}</h1>
+          <StatusBadge kind="decision" value={d.status} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {canEdit && (
             <>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="shadow-sm">
                 <Link to={`/decisions/${d.id}/edit`}>Edit</Link>
               </Button>
               {(role === 'admin' || role === 'department_head') && (
@@ -140,7 +138,7 @@ export function DecisionDetailPage() {
             <CardTitle>Source meeting</CardTitle>
           </CardHeader>
           <CardContent>
-            <Link className="text-primary hover:underline" to={`/meetings/${data.meeting.id}`}>
+            <Link className="link-subtle font-medium" to={`/meetings/${data.meeting.id}`}>
               {data.meeting.title}
             </Link>
           </CardContent>
@@ -156,17 +154,21 @@ export function DecisionDetailPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
+                <TableHead className="hidden sm:table-cell">Status</TableHead>
                 <TableHead>Due</TableHead>
-                <TableHead />
+                <TableHead className="w-[88px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.action_items.map((a) => (
                 <TableRow key={a.id}>
-                  <TableCell>{a.title}</TableCell>
-                  <TableCell>{a.due_date}</TableCell>
+                  <TableCell className="max-w-[200px] truncate font-medium">{a.title}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <StatusBadge kind="action" value={a.status} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{a.due_date}</TableCell>
                   <TableCell>
-                    <Link className="text-primary hover:underline" to={`/actions/${a.id}`}>
+                    <Link className="link-subtle text-sm" to={`/actions/${a.id}`}>
                       Open
                     </Link>
                   </TableCell>

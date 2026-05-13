@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MEETING_TYPES, MEETING_STATUS } from '@/constants/enums';
 import type { Meeting } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
+import { PageHeader } from '@/components/PageHeader';
 
 const schema = z.object({
   title: z.string().min(1),
@@ -161,11 +162,11 @@ export function MeetingEditorPage() {
   const deptOptions = (departments || []).filter((d) => d.division_id === divisionId);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{isNew ? 'New meeting' : 'Edit meeting'}</h1>
-        <p className="text-muted-foreground">All fields align with the SegWitz operational record.</p>
-      </div>
+      <div className="mx-auto max-w-4xl space-y-8">
+      <PageHeader
+        title={isNew ? 'New meeting' : 'Edit meeting'}
+        description="All fields align with the SegWitz operational record. Required fields must be complete before save."
+      />
 
       <form
         onSubmit={form.handleSubmit((v) => saveMutation.mutate(v))}
@@ -182,7 +183,7 @@ export function MeetingEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Type</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('meeting_type')}>
+              <select className="select-native" {...form.register('meeting_type')}>
                 {MEETING_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
@@ -196,7 +197,7 @@ export function MeetingEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('status')}>
+              <select className="select-native" {...form.register('status')}>
                 {MEETING_STATUS.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
@@ -206,7 +207,7 @@ export function MeetingEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Division</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('division_id')}>
+              <select className="select-native" {...form.register('division_id')}>
                 <option value="">Select…</option>
                 {(divisions || []).map((d) => (
                   <option key={d.id} value={d.id}>
@@ -217,7 +218,7 @@ export function MeetingEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Department</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('department_id')}>
+              <select className="select-native" {...form.register('department_id')}>
                 <option value="">Select…</option>
                 {deptOptions.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -228,7 +229,7 @@ export function MeetingEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Owner</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('owner_id')}>
+              <select className="select-native" {...form.register('owner_id')}>
                 <option value="">Select…</option>
                 {(users || []).map((u) => (
                   <option key={u.id} value={u.id}>

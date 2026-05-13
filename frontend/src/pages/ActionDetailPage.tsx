@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import type { ActionItem, Decision, Meeting } from '@/types/models';
-import { ACTION_PRIORITY, ACTION_STATUS, labelFrom } from '@/constants/enums';
+import { ACTION_STATUS } from '@/constants/enums';
+import { PageLoading } from '@/components/PageLoading';
+import { StatusBadge } from '@/components/StatusBadge';
 import { useAuthStore } from '@/store/authStore';
 
 export function ActionDetailPage() {
@@ -17,7 +19,7 @@ export function ActionDetailPage() {
   const role = useAuthStore((s) => s.profile?.role?.slug);
   const profileId = useAuthStore((s) => s.profile?.id);
 
-  const { data, refetch } = useQuery({
+  const { data, refetch, isLoading } = useQuery({
     queryKey: ['action', id],
     queryFn: async () => {
       const { data: res } = await api.get<{ action: ActionItem; meeting: Meeting | null; decision: Decision | null }>(
@@ -48,7 +50,7 @@ export function ActionDetailPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (!data) return <div className="text-muted-foreground">Loading…</div>;
+  if (isLoading || !data) return <PageLoading />;
 
   const a = data.action;
   const canEdit =
@@ -59,18 +61,19 @@ export function ActionDetailPage() {
       (role === 'team_member' && a.assigned_to === profileId));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{a.title}</h1>
-          <p className="text-muted-foreground">
-            {labelFrom(ACTION_PRIORITY, a.priority)} · {labelFrom(ACTION_STATUS, a.status)}
-          </p>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div className="flex flex-col gap-6 border-b border-border/60 pb-8 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 space-y-3">
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{a.title}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge kind="priority" value={a.priority} />
+            <StatusBadge kind="action" value={a.status} />
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {canEdit && (
             <>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="shadow-sm">
                 <Link to={`/actions/${a.id}/edit`}>Edit</Link>
               </Button>
               {(role === 'admin' || role === 'department_head') && (
@@ -88,25 +91,28 @@ export function ActionDetailPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="transition-shadow hover:shadow-card-hover">
         <CardHeader>
           <CardTitle>Details</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <p className="whitespace-pre-wrap">{a.description || '—'}</p>
-          <div>Due: {a.due_date}</div>
+        <CardContent className="space-y-4 text-sm leading-relaxed">
+          <p className="whitespace-pre-wrap text-foreground">{a.description || '—'}</p>
+          <div className="rounded-lg border border-border/60 bg-muted/25 px-3 py-2 text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Due</span>
+            <div className="mt-1 font-medium text-foreground">{a.due_date}</div>
+          </div>
           {data.meeting && (
             <div>
-              Meeting:{' '}
-              <Link className="text-primary hover:underline" to={`/meetings/${data.meeting.id}`}>
+              <span className="text-muted-foreground">Meeting: </span>
+              <Link className="link-subtle font-medium" to={`/meetings/${data.meeting.id}`}>
                 {data.meeting.title}
               </Link>
             </div>
           )}
           {data.decision && (
             <div>
-              Decision:{' '}
-              <Link className="text-primary hover:underline" to={`/decisions/${data.decision.id}`}>
+              <span className="text-muted-foreground">Decision: </span>
+              <Link className="link-subtle font-medium" to={`/decisions/${data.decision.id}`}>
                 {data.decision.title}
               </Link>
             </div>
@@ -115,7 +121,7 @@ export function ActionDetailPage() {
       </Card>
 
       {role === 'team_member' && a.assigned_to === profileId && (
-        <Card>
+        <Card className="transition-shadow hover:shadow-card-hover">
           <CardHeader>
             <CardTitle>Update progress</CardTitle>
           </CardHeader>
@@ -123,7 +129,7 @@ export function ActionDetailPage() {
             <div className="space-y-2">
               <Label>Status</Label>
               <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="select-native"
                 defaultValue={a.status}
                 onChange={(e) => updateMut.mutate({ status: e.target.value })}
               >

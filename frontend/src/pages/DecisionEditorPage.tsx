@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DECISION_STATUS } from '@/constants/enums';
 import type { Decision } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
+import { PageHeader } from '@/components/PageHeader';
 
 const schema = z.object({
   title: z.string().min(1),
@@ -148,8 +149,11 @@ export function DecisionEditorPage() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <h1 className="text-2xl font-semibold">{isNew ? 'New decision' : 'Edit decision'}</h1>
+    <div className="mx-auto max-w-4xl space-y-8">
+      <PageHeader
+        title={isNew ? 'New decision' : 'Edit decision'}
+        description="Capture the decision record, ownership, and approval path in line with governance standards."
+      />
 
       <form onSubmit={form.handleSubmit((v) => saveMut.mutate(v))} className="space-y-6">
         <Card>
@@ -167,7 +171,7 @@ export function DecisionEditorPage() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label>Link to meeting (optional)</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('meeting_id')}>
+              <select className="select-native" {...form.register('meeting_id')}>
                 <option value="">None</option>
                 {(meetings || []).map((m) => (
                   <option key={m.id} value={m.id}>
@@ -178,7 +182,7 @@ export function DecisionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Division</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('division_id')}>
+              <select className="select-native" {...form.register('division_id')}>
                 <option value="">Select…</option>
                 {(divisions || []).map((d) => (
                   <option key={d.id} value={d.id}>
@@ -189,7 +193,7 @@ export function DecisionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Department</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('department_id')}>
+              <select className="select-native" {...form.register('department_id')}>
                 <option value="">Select…</option>
                 {deptOpts.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -200,7 +204,7 @@ export function DecisionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Owner</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('owner_id')}>
+              <select className="select-native" {...form.register('owner_id')}>
                 {(users || []).map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.full_name}
@@ -210,7 +214,7 @@ export function DecisionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Approved by</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('approved_by')}>
+              <select className="select-native" {...form.register('approved_by')}>
                 <option value="">—</option>
                 {(users || []).map((u) => (
                   <option key={u.id} value={u.id}>
@@ -225,7 +229,7 @@ export function DecisionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('status')}>
+              <select className="select-native" {...form.register('status')}>
                 {DECISION_STATUS.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.label}

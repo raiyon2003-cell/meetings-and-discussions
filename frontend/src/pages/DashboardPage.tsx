@@ -1,14 +1,24 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  Calendar,
+  Gavel,
+  CheckCircle2,
+  Clock,
+  FileQuestion,
+  AlertTriangle,
+  ArrowUpRight,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Meeting, Decision } from '@/types/models';
 import { labelFrom, MEETING_TYPES } from '@/constants/enums';
 import { PageLoading } from '@/components/PageLoading';
+import { StatusBadge } from '@/components/StatusBadge';
+import { cn } from '@/lib/utils';
 
 const DashboardCharts = lazy(() => import('./dashboard/DashboardCharts'));
 
@@ -28,6 +38,13 @@ type Summary = {
   actions_by_department: Record<string, number>;
 };
 
+type StatDef = {
+  label: string;
+  value: number;
+  icon: LucideIcon;
+  accent: string;
+};
+
 export function DashboardPage() {
   const { data, isLoading, error, isPlaceholderData } = useQuery({
     queryKey: ['dashboard-summary'],
@@ -40,16 +57,17 @@ export function DashboardPage() {
     placeholderData: (prev) => prev,
   });
 
-  const summaryCards = useMemo(() => {
+  const stats = useMemo((): StatDef[] => {
     if (!data) return [];
+    const t = data.totals;
     return [
-      { label: 'Total meetings', value: data.totals.meetings },
-      { label: 'Finalized meetings', value: data.totals.meetings_finalized },
-      { label: 'Total decisions', value: data.totals.decisions },
-      { label: 'Approved decisions', value: data.totals.decisions_approved },
-      { label: 'Pending decisions', value: data.totals.decisions_pending },
-      { label: 'Proposed decisions', value: data.totals.decisions_proposed },
-      { label: 'Overdue actions', value: data.totals.actions_overdue },
+      { label: 'Total meetings', value: t.meetings, icon: Calendar, accent: 'from-sky-500/15 to-transparent' },
+      { label: 'Finalized', value: t.meetings_finalized, icon: CheckCircle2, accent: 'from-emerald-500/15 to-transparent' },
+      { label: 'Decisions', value: t.decisions, icon: Gavel, accent: 'from-violet-500/12 to-transparent' },
+      { label: 'Approved', value: t.decisions_approved, icon: CheckCircle2, accent: 'from-emerald-500/15 to-transparent' },
+      { label: 'Pending review', value: t.decisions_pending, icon: Clock, accent: 'from-amber-500/12 to-transparent' },
+      { label: 'Proposed', value: t.decisions_proposed, icon: FileQuestion, accent: 'from-slate-500/12 to-transparent' },
+      { label: 'Overdue actions', value: t.actions_overdue, icon: AlertTriangle, accent: 'from-red-500/12 to-transparent' },
     ];
   }, [data]);
 
@@ -59,15 +77,22 @@ export function DashboardPage() {
   if (error) {
     const message = (error as Error).message;
     return (
-      <Card className="border-destructive/40 bg-destructive/5">
-        <CardHeader>
-          <CardTitle className="text-destructive">Dashboard could not load</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Data comes from your Render API. Fix the configuration below, then refresh this page.
-          </p>
+      <Card className="overflow-hidden border-destructive/30 bg-destructive/[0.06] shadow-card">
+        <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+            <AlertTriangle className="h-5 w-5" aria-hidden />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="text-destructive">Dashboard could not load</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Data comes from your API. Fix the configuration below, then refresh this page.
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm text-foreground">{message}</p>
+          <p className="whitespace-pre-wrap rounded-lg border border-border/60 bg-background/80 p-4 text-sm leading-relaxed text-foreground">
+            {message}
+          </p>
         </CardContent>
       </Card>
     );
@@ -75,27 +100,28 @@ export function DashboardPage() {
   if (!data) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {isPlaceholderData && (
-        <p className="text-xs text-muted-foreground" aria-live="polite">
+        <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
           Refreshing…
         </p>
       )}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Operational dashboard</h1>
-        <p className="text-muted-foreground">Meetings, decisions, and accountability at a glance.</p>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {summaryCards.map((c) => (
-          <Card key={c.label}>
-            <CardHeader className="pb-2">
-              <CardDescriptionSmall>{c.label}</CardDescriptionSmall>
-              <div className="text-3xl font-bold">{c.value}</div>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      <header className="space-y-2 border-b border-border/60 pb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Overview</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">Operational dashboard</h1>
+        <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+          Meetings, decisions, and accountability at a glance. Metrics refresh when you revisit this page.
+        </p>
+      </header>
+
+      <section aria-label="Key metrics">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((s) => (
+            <StatCard key={s.label} {...s} />
+          ))}
+        </div>
+      </section>
 
       <Suspense fallback={<PageLoading />}>
         <DashboardCharts
@@ -105,67 +131,91 @@ export function DashboardPage() {
       </Suspense>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent meetings</CardTitle>
+        <Card className="overflow-hidden transition-shadow duration-200 hover:shadow-card-hover">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-semibold">Recent meetings</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>When</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.recent_meetings.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.title}</TableCell>
-                    <TableCell>{labelFrom(MEETING_TYPES, m.meeting_type)}</TableCell>
-                    <TableCell>{new Date(m.scheduled_at).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Link className="text-primary hover:underline" to={`/meetings/${m.id}`}>
-                        View
-                      </Link>
-                    </TableCell>
+          <CardContent className="px-0 pb-4">
+            <div className="surface-table mx-4 border-0 shadow-none">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-0 hover:bg-transparent">
+                    <TableHead>Title</TableHead>
+                    <TableHead className="hidden sm:table-cell">Type</TableHead>
+                    <TableHead className="hidden md:table-cell">When</TableHead>
+                    <TableHead className="w-[72px]" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.recent_meetings.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="max-w-[140px] truncate font-medium sm:max-w-none">{m.title}</TableCell>
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
+                        {labelFrom(MEETING_TYPES, m.meeting_type)}
+                      </TableCell>
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {new Date(m.scheduled_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          className="inline-flex items-center gap-0.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                          to={`/meetings/${m.id}`}
+                        >
+                          View
+                          <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden />
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {!data.recent_meetings.length && (
+              <p className="px-6 pb-2 text-center text-sm text-muted-foreground">No recent meetings.</p>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent decisions</CardTitle>
+        <Card className="overflow-hidden transition-shadow duration-200 hover:shadow-card-hover">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-semibold">Recent decisions</CardTitle>
+            <Gavel className="h-4 w-4 text-muted-foreground" aria-hidden />
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.recent_decisions.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-medium">{d.title}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{d.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Link className="text-primary hover:underline" to={`/decisions/${d.id}`}>
-                        View
-                      </Link>
-                    </TableCell>
+          <CardContent className="px-0 pb-4">
+            <div className="surface-table mx-4 border-0 shadow-none">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-0 hover:bg-transparent">
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[72px]" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.recent_decisions.map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell className="max-w-[160px] truncate font-medium">{d.title}</TableCell>
+                      <TableCell>
+                        <StatusBadge kind="decision" value={d.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          className="inline-flex items-center gap-0.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                          to={`/decisions/${d.id}`}
+                        >
+                          View
+                          <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden />
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {!data.recent_decisions.length && (
+              <p className="px-6 pb-2 text-center text-sm text-muted-foreground">No recent decisions.</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -173,6 +223,24 @@ export function DashboardPage() {
   );
 }
 
-function CardDescriptionSmall({ children }: { children: ReactNode }) {
-  return <div className="text-sm text-muted-foreground">{children}</div>;
+function StatCard({ label, value, icon: Icon, accent }: StatDef) {
+  return (
+    <Card
+      className={cn(
+        'group relative overflow-hidden border-border/60 bg-gradient-to-br from-card to-card transition-all duration-200',
+        'hover:border-primary/20 hover:shadow-card-hover',
+      )}
+    >
+      <div className={cn('pointer-events-none absolute inset-0 bg-gradient-to-br opacity-80', accent)} aria-hidden />
+      <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-5 pt-5">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
+        </div>
+        <div className="rounded-lg bg-muted/80 p-2 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+          <Icon className="h-4 w-4" aria-hidden />
+        </div>
+      </CardHeader>
+    </Card>
+  );
 }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuthStore } from '@/store/authStore';
 import { Navigate } from 'react-router-dom';
+import { PageHeader } from '@/components/PageHeader';
 
 type UserRow = {
   id: string;
@@ -63,72 +64,74 @@ export function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Users</h1>
-        <p className="text-muted-foreground">Assign roles and departments (Admin).</p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Users"
+        description="Assign roles and departments. Changes apply immediately for the SegWitz directory."
+      />
 
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden transition-shadow hover:shadow-card-hover">
+        <CardHeader className="border-b border-border/60">
           <CardTitle>Directory</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Role</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(users || []).map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>{u.full_name}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                      defaultValue={u.department_id ?? ''}
-                      onChange={(e) =>
-                        patchMut.mutate({
-                          id: u.id,
-                          department_id: e.target.value || null,
-                        })
-                      }
-                    >
-                      <option value="">—</option>
-                      {(departments || []).map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
-                  <TableCell>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm"
-                      defaultValue={u.roles?.id ?? ''}
-                      onChange={(e) =>
-                        patchMut.mutate({
-                          id: u.id,
-                          role_id: e.target.value,
-                        })
-                      }
-                    >
-                      {(roles || []).map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </TableCell>
+        <CardContent className="px-0 pb-2 pt-2">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="min-w-[160px]">Department</TableHead>
+                  <TableHead className="min-w-[160px]">Role</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {(users || []).map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.full_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                    <TableCell>
+                      <select
+                        className="select-native w-full min-w-[140px] max-w-[220px]"
+                        defaultValue={u.department_id ?? ''}
+                        onChange={(e) =>
+                          patchMut.mutate({
+                            id: u.id,
+                            department_id: e.target.value || null,
+                          })
+                        }
+                      >
+                        <option value="">—</option>
+                        {(departments || []).map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        className="select-native w-full min-w-[140px] max-w-[220px]"
+                        defaultValue={u.roles?.id ?? ''}
+                        onChange={(e) =>
+                          patchMut.mutate({
+                            id: u.id,
+                            role_id: e.target.value,
+                          })
+                        }
+                      >
+                        {(roles || []).map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

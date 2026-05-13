@@ -35,7 +35,6 @@ export default {
           muted: 'hsl(var(--sidebar-muted))',
           active: 'hsl(var(--sidebar-active))',
         },
-        /* Brand guideline hex tokens (for one-off use) */
         brand: {
           platinum: '#ebe9e4',
           'deep-teal': '#073b4c',
@@ -49,9 +48,29 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        xl: 'calc(var(--radius) + 4px)',
       },
       boxShadow: {
-        brand: '0 1px 3px rgba(7, 59, 76, 0.08), 0 4px 14px rgba(52, 78, 65, 0.06)',
+        brand: '0 1px 2px hsl(var(--shadow-color) / 0.06), 0 4px 16px hsl(var(--shadow-color) / 0.08)',
+        card: '0 1px 2px hsl(var(--shadow-color) / 0.05), 0 8px 24px hsl(var(--shadow-color) / 0.06)',
+        'card-hover': '0 2px 4px hsl(var(--shadow-color) / 0.06), 0 12px 32px hsl(var(--shadow-color) / 0.08)',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in-slow': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.32s ease-out both',
+        'fade-in-slow': 'fade-in-slow 0.45s ease-out both',
       },
     },
   },

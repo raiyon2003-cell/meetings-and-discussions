@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ACTION_PRIORITY, ACTION_STATUS } from '@/constants/enums';
 import type { ActionItem } from '@/types/models';
+import { PageHeader } from '@/components/PageHeader';
 
 const schema = z
   .object({
@@ -125,8 +126,11 @@ export function ActionEditorPage() {
   });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold">{isNew ? 'New action item' : 'Edit action item'}</h1>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader
+        title={isNew ? 'New action item' : 'Edit action item'}
+        description="Define the task, owner, due date, and tracking fields. Assignees can update status where permitted."
+      />
 
       <form onSubmit={form.handleSubmit((v) => saveMut.mutate(v))} className="space-y-6">
         <Card>
@@ -145,7 +149,7 @@ export function ActionEditorPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Assigned to</Label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('assigned_to')}>
+                <select className="select-native" {...form.register('assigned_to')}>
                   {(users || []).map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.full_name}
@@ -159,7 +163,7 @@ export function ActionEditorPage() {
               </div>
               <div className="space-y-2">
                 <Label>Priority</Label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('priority')}>
+                <select className="select-native" {...form.register('priority')}>
                   {ACTION_PRIORITY.map((p) => (
                     <option key={p.value} value={p.value}>
                       {p.label}
@@ -169,7 +173,7 @@ export function ActionEditorPage() {
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('status')}>
+                <select className="select-native" {...form.register('status')}>
                   {ACTION_STATUS.map((p) => (
                     <option key={p.value} value={p.value}>
                       {p.label}
@@ -180,7 +184,7 @@ export function ActionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Related meeting</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('meeting_id')}>
+              <select className="select-native" {...form.register('meeting_id')}>
                 <option value="">—</option>
                 {(meetings || []).map((m) => (
                   <option key={m.id} value={m.id}>
@@ -191,7 +195,7 @@ export function ActionEditorPage() {
             </div>
             <div className="space-y-2">
               <Label>Related decision</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" {...form.register('decision_id')}>
+              <select className="select-native" {...form.register('decision_id')}>
                 <option value="">—</option>
                 {(decisions || []).map((m) => (
                   <option key={m.id} value={m.id}>

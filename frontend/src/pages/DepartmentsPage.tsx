@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PageHeader } from '@/components/PageHeader';
+import { FolderTree } from 'lucide-react';
 
 export function DepartmentsPage() {
   const { data } = useQuery({
@@ -13,34 +15,34 @@ export function DepartmentsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Departments</h1>
-        <p className="text-muted-foreground">Departments nested under divisions.</p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Master list</CardTitle>
+    <div className="space-y-8">
+      <PageHeader title="Departments" description="Departments nested under divisions for granular routing and access." />
+      <Card className="overflow-hidden transition-shadow hover:shadow-card-hover">
+        <CardHeader className="flex flex-row items-center gap-2 border-b border-border/60">
+          <FolderTree className="h-4 w-4 text-muted-foreground" aria-hidden />
+          <CardTitle className="text-base">Master list</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Division ID</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(data || []).map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell>{d.name}</TableCell>
-                  <TableCell className="font-mono text-xs">{d.slug}</TableCell>
-                  <TableCell className="font-mono text-xs">{d.division_id}</TableCell>
+        <CardContent className="px-0 pb-2 pt-2">
+          <div className="surface-table border-0 shadow-none">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead className="hidden lg:table-cell">Division ID</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {(data || []).map((d) => (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-medium">{d.name}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{d.slug}</TableCell>
+                    <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">{d.division_id}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -3,13 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Attachment, Decision, Meeting, ActionItem } from '@/types/models';
-import { labelFrom, MEETING_TYPES, MEETING_STATUS } from '@/constants/enums';
+import { labelFrom, MEETING_TYPES } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
 import { Input } from '@/components/ui/input';
+import { PageLoading } from '@/components/PageLoading';
+import { StatusBadge } from '@/components/StatusBadge';
 
 type Detail = {
   meeting: Meeting;
@@ -75,30 +76,41 @@ export function MeetingDetailPage() {
     window.open(data.url, '_blank', 'noopener,noreferrer');
   }
 
-  if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
-  if (error || !data) return <div className="text-red-600">{(error as Error)?.message}</div>;
+  if (isLoading) return <PageLoading />;
+  if (error || !data) {
+    return (
+      <Card className="border-destructive/30 bg-destructive/[0.06]">
+        <CardHeader>
+          <CardTitle className="text-destructive">Could not load meeting</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{(error as Error)?.message ?? 'Unknown error'}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const m = data.meeting;
   const canEdit = role && !['view_only', 'management', 'team_member'].includes(role);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
+    <div className="space-y-10">
+      <div className="flex flex-col gap-6 border-b border-border/60 pb-8 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold">{m.title}</h1>
-            <Badge variant={m.status === 'finalized' ? 'success' : 'secondary'}>{labelFrom(MEETING_STATUS, m.status)}</Badge>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{m.title}</h1>
+            <StatusBadge kind="meeting" value={m.status} />
           </div>
-          <p className="mt-1 text-muted-foreground">{labelFrom(MEETING_TYPES, m.meeting_type)}</p>
+          <p className="text-sm text-muted-foreground md:text-[15px]">{labelFrom(MEETING_TYPES, m.meeting_type)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {canEdit && (
             <>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="shadow-sm">
                 <Link to={`/meetings/${m.id}/edit`}>Edit</Link>
               </Button>
               {m.status === 'draft' && (
-                <Button onClick={() => finalizeMut.mutate()} disabled={finalizeMut.isPending}>
+                <Button className="shadow-sm" onClick={() => finalizeMut.mutate()} disabled={finalizeMut.isPending}>
                   Finalize
                 </Button>
               )}
@@ -118,44 +130,45 @@ export function MeetingDetailPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="transition-shadow hover:shadow-card-hover">
           <CardHeader>
             <CardTitle>Schedule & routing</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-0 text-sm">
             <Row label="When" value={new Date(m.scheduled_at).toLocaleString()} />
             <Row label="Location" value={m.location || '—'} />
             <Row label="Online link" value={m.online_meeting_link || '—'} />
             <Row label="Project / client" value={m.related_project_client || '—'} />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="transition-shadow hover:shadow-card-hover">
           <CardHeader>
             <CardTitle>Records</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <section>
-              <h4 className="font-medium">Agenda</h4>
-              <p className="whitespace-pre-wrap text-muted-foreground">{m.agenda || '—'}</p>
+          <CardContent className="space-y-5 text-sm">
+            <section className="space-y-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Agenda</h4>
+              <p className="whitespace-pre-wrap leading-relaxed text-foreground">{m.agenda || '—'}</p>
             </section>
-            <section>
-              <h4 className="font-medium">Discussion summary</h4>
-              <p className="whitespace-pre-wrap text-muted-foreground">{m.discussion_summary || '—'}</p>
+            <section className="space-y-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Discussion summary</h4>
+              <p className="whitespace-pre-wrap leading-relaxed text-foreground">{m.discussion_summary || '—'}</p>
             </section>
-            <section>
-              <h4 className="font-medium">Key discussion points</h4>
-              <p className="whitespace-pre-wrap text-muted-foreground">{m.key_discussion_points || '—'}</p>
+            <section className="space-y-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Key discussion points</h4>
+              <p className="whitespace-pre-wrap leading-relaxed text-foreground">{m.key_discussion_points || '—'}</p>
             </section>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden transition-shadow hover:shadow-card-hover">
         <CardHeader>
           <CardTitle>Attendees</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="px-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -170,16 +183,18 @@ export function MeetingDetailPage() {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden transition-shadow hover:shadow-card-hover">
         <CardHeader>
           <CardTitle>Decisions</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="px-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
@@ -190,26 +205,30 @@ export function MeetingDetailPage() {
             <TableBody>
               {data.decisions.map((d) => (
                 <TableRow key={d.id}>
-                  <TableCell>{d.title}</TableCell>
-                  <TableCell>{d.status}</TableCell>
+                  <TableCell className="font-medium">{d.title}</TableCell>
                   <TableCell>
-                    <Link className="text-primary hover:underline" to={`/decisions/${d.id}`}>
+                    <StatusBadge kind="decision" value={d.status} />
+                  </TableCell>
+                  <TableCell>
+                    <Link className="link-subtle text-sm" to={`/decisions/${d.id}`}>
                       Open
                     </Link>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden transition-shadow hover:shadow-card-hover">
         <CardHeader>
           <CardTitle>Action items</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="px-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
@@ -221,28 +240,31 @@ export function MeetingDetailPage() {
             <TableBody>
               {data.action_items.map((a) => (
                 <TableRow key={a.id}>
-                  <TableCell>{a.title}</TableCell>
-                  <TableCell>{a.due_date}</TableCell>
-                  <TableCell>{a.status}</TableCell>
+                  <TableCell className="font-medium">{a.title}</TableCell>
+                  <TableCell className="text-muted-foreground">{a.due_date}</TableCell>
                   <TableCell>
-                    <Link className="text-primary hover:underline" to={`/actions/${a.id}`}>
+                    <StatusBadge kind="action" value={a.status} />
+                  </TableCell>
+                  <TableCell>
+                    <Link className="link-subtle text-sm" to={`/actions/${a.id}`}>
                       Open
                     </Link>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="transition-shadow hover:shadow-card-hover">
         <CardHeader>
           <CardTitle>Attachments</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {canEdit && (
-            <div>
+            <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4">
               <Input
                 type="file"
                 onChange={(e) => {
@@ -252,7 +274,8 @@ export function MeetingDetailPage() {
               />
             </div>
           )}
-          <Table>
+          <div className="overflow-x-auto rounded-lg border border-border/60">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>File</TableHead>
@@ -271,22 +294,26 @@ export function MeetingDetailPage() {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="transition-shadow hover:shadow-card-hover">
         <CardHeader>
           <CardTitle>Activity history</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {data.activity.map((log) => (
-            <div key={log.id} className="border-l-2 border-primary pl-3 text-sm">
-              <div className="font-medium">{log.action}</div>
-              <div className="text-muted-foreground">{new Date(log.created_at).toLocaleString()}</div>
+            <div
+              key={log.id}
+              className="relative border-l-2 border-primary/60 pl-4 text-sm before:absolute before:left-[-5px] before:top-1.5 before:h-2 before:w-2 before:rounded-full before:bg-primary"
+            >
+              <div className="font-medium text-foreground">{log.action}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</div>
             </div>
           ))}
-          {!data.activity.length && <div className="text-muted-foreground">No activity yet.</div>}
+          {!data.activity.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
         </CardContent>
       </Card>
     </div>
@@ -295,9 +322,9 @@ export function MeetingDetailPage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4">
+    <div className="flex justify-between gap-4 border-b border-border/50 py-2.5 last:border-0">
       <span className="text-muted-foreground">{label}</span>
-      <span className="text-right">{value}</span>
+      <span className="text-right font-medium text-foreground">{value}</span>
     </div>
   );
 }

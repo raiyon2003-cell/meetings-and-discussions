@@ -1,15 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Gavel } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Decision } from '@/types/models';
-import { DECISION_STATUS, labelFrom } from '@/constants/enums';
+import { DECISION_STATUS } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
 import { useState } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { PageHeader } from '@/components/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { StatusBadge } from '@/components/StatusBadge';
+import { PageLoading } from '@/components/PageLoading';
 
 export function DecisionsPage() {
   const role = useAuthStore((s) => s.profile?.role?.slug);
@@ -30,30 +34,30 @@ export function DecisionsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Decision register</h1>
-          <p className="text-muted-foreground">Authoritative record of what was decided and approved.</p>
-        </div>
-        {canCreate && (
-          <Button asChild>
-            <Link to="/decisions/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New decision
-            </Link>
-          </Button>
-        )}
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Decision register"
+        description="Authoritative record of what was decided, approved, or deferred across SegWitz."
+        actions={
+          canCreate ? (
+            <Button asChild className="shadow-sm">
+              <Link to="/decisions/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New decision
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
-      <div className="flex flex-wrap gap-3">
-        <input
-          className="h-10 max-w-xs rounded-md border border-input bg-background px-3 text-sm"
-          placeholder="Search title…"
+      <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/50 p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
+        <Input
+          placeholder="Search by title…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="max-w-md bg-background/80"
         />
-        <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className="select-native w-full sm:max-w-[220px]" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           {DECISION_STATUS.map((s) => (
             <option key={s.value} value={s.value}>
@@ -63,36 +67,41 @@ export function DecisionsPage() {
         </select>
       </div>
 
-      <div className="rounded-md border border-border bg-card">
+      <div className="surface-table">
         {isLoading && !data ? (
-          <div className="p-8 text-center text-muted-foreground">Loading…</div>
+          <PageLoading />
         ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Decided</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(data || []).map((d) => (
-              <TableRow key={d.id}>
-                <TableCell className="font-medium">{d.title}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{labelFrom(DECISION_STATUS, d.status)}</Badge>
-                </TableCell>
-                <TableCell>{d.date_decided}</TableCell>
-                <TableCell>
-                  <Link className="text-primary hover:underline" to={`/decisions/${d.id}`}>
-                    Open
-                  </Link>
-                </TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden sm:table-cell">Decided</TableHead>
+                <TableHead className="w-[88px]" />
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {(data || []).map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell className="max-w-[220px] truncate font-medium">{d.title}</TableCell>
+                  <TableCell>
+                    <StatusBadge kind="decision" value={d.status} />
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground sm:table-cell">{d.date_decided}</TableCell>
+                  <TableCell>
+                    <Link className="link-subtle text-sm" to={`/decisions/${d.id}`}>
+                      Open
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+        {!isLoading && data && !data.length && (
+          <div className="border-t border-border/60 p-6">
+            <EmptyState icon={Gavel} title="No decisions match" description="Clear filters or add a new decision to the register." />
+          </div>
         )}
       </div>
     </div>

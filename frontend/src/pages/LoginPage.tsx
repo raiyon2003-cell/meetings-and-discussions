@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from '@/components/ThemeProvider';
 
 const schema = z.object({
   email: z.string().email(),
@@ -22,6 +24,7 @@ export function LoginPage() {
   const session = useAuthStore((s) => s.session);
   const loading = useAuthStore((s) => s.loading);
   const [submitting, setSubmitting] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const form = useForm<Form>({
     resolver: zodResolver(schema),
@@ -49,8 +52,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-deep-teal p-4">
-      {/* Subtle brand gradient: Deep Teal → Charcoal Green */}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-deep-teal p-4 dark:bg-[#051a22]">
       <div
         className="pointer-events-none absolute inset-0 opacity-90"
         style={{
@@ -59,39 +61,47 @@ export function LoginPage() {
         }}
         aria-hidden
       />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,59,76,0.3)_0%,rgba(7,59,76,0.85)_100%)]" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,59,76,0.25)_0%,rgba(7,59,76,0.88)_100%)] dark:opacity-95"
+        aria-hidden
+      />
 
-      <Card className="relative z-[1] w-full max-w-md border-brand-charcoal-green/15 shadow-brand">
-        <CardHeader className="space-y-1 border-b border-border/80 pb-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-steel-teal">SegWitz</div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-brand-charcoal-green">
-            Meeting &amp; Decision Repository
-          </CardTitle>
-          <CardDescription className="text-base text-brand-muted-olive">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute right-4 top-4 z-[2] h-10 w-10 rounded-full border border-white/15 bg-white/5 text-white backdrop-blur-sm hover:bg-white/15"
+        onClick={() => toggleTheme()}
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
+
+      <Card className="relative z-[1] w-full max-w-md border-white/10 bg-card/95 shadow-card backdrop-blur-md dark:border-border/40 dark:bg-card/90">
+        <CardHeader className="space-y-2 border-b border-border/60 pb-6">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">SegWitz</div>
+          <CardTitle className="text-2xl font-bold tracking-tight md:text-[1.65rem]">Meeting &amp; Decision Repository</CardTitle>
+          <CardDescription className="text-[15px] leading-relaxed">
             Sign in with your SegWitz Supabase account.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+        <CardContent className="pt-8">
+          <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-brand-charcoal-green">
-                Email
-              </Label>
+              <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" autoComplete="email" {...form.register('email')} />
               {form.formState.errors.email && (
-                <p className="text-xs text-red-600">{form.formState.errors.email.message}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{form.formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-brand-charcoal-green">
-                Password
-              </Label>
+              <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" autoComplete="current-password" {...form.register('password')} />
               {form.formState.errors.password && (
-                <p className="text-xs text-red-600">{form.formState.errors.password.message}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{form.formState.errors.password.message}</p>
               )}
             </div>
-            <Button type="submit" className="w-full font-semibold" disabled={submitting || loading}>
+            <Button type="submit" className="w-full font-semibold shadow-sm" disabled={submitting || loading}>
               {submitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
