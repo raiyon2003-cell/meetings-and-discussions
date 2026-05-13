@@ -19,18 +19,34 @@ import searchRouter from './routes/search.js';
 
 const app = express();
 
+/** Normalize origin for comparison (scheme + host, no trailing slash, stable casing). */
+function normalizeOrigin(origin) {
+  if (!origin) return '';
+  try {
+    const u = new URL(origin);
+    return `${u.protocol}//${u.hostname}${u.port ? `:${u.port}` : ''}`;
+  } catch {
+    return origin.trim().replace(/\/$/, '');
+  }
+}
+
 /** Comma-separated: local + production frontends (e.g. http://localhost:5173,https://xxx.vercel.app) */
 const corsOrigins = (process.env.FRONTEND_URL || '')
   .split(',')
   .map((s) => s.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+  .map(normalizeOrigin);
 
-const allowVercelPreviewOrigins = process.env.CORS_ALLOW_VERCEL_PREVIEWS === 'true';
+/** Default ON: preview URLs (https://*.vercel.app) work without extra Render env. Set CORS_ALLOW_VERCEL_PREVIEWS=false to disable. */
+const allowVercelPreviewOrigins = process.env.CORS_ALLOW_VERCEL_PREVIEWS !== 'false';
+
+const allowedOriginSet = new Set(corsOrigins);
 
 function corsAllowsOrigin(origin) {
   if (!corsOrigins.length) return true;
   if (!origin) return true;
-  if (corsOrigins.includes(origin)) return true;
+  const n = normalizeOrigin(origin);
+  if (allowedOriginSet.has(n)) return true;
   if (allowVercelPreviewOrigins) {
     try {
       const u = new URL(origin);

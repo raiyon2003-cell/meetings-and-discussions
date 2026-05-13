@@ -1,5 +1,5 @@
 import { lazy, memo, Suspense, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -18,6 +18,7 @@ import type { Meeting, Decision } from '@/types/models';
 import { labelFrom, MEETING_TYPES } from '@/constants/enums';
 import { PageLoading } from '@/components/PageLoading';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const DashboardCharts = lazy(() => import('./dashboard/DashboardCharts'));
@@ -46,6 +47,11 @@ type StatDef = {
 };
 
 export function DashboardPage() {
+  const qc = useQueryClient();
+  const apiOrigin = import.meta.env.VITE_API_URL
+    ? String(import.meta.env.VITE_API_URL).replace(/\/$/, '')
+    : '';
+
   const { data, isLoading, error, isPlaceholderData } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: async () => {
@@ -89,9 +95,25 @@ export function DashboardPage() {
             </p>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <p className="whitespace-pre-wrap rounded-lg border border-border/60 bg-background/80 p-4 text-sm leading-relaxed text-foreground">
             {message}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="default" onClick={() => void qc.invalidateQueries({ queryKey: ['dashboard-summary'] })}>
+              Retry loading dashboard
+            </Button>
+            {apiOrigin ? (
+              <Button type="button" variant="outline" asChild>
+                <a href={`${apiOrigin}/health`} target="_blank" rel="noopener noreferrer">
+                  Open API health (wake Render)
+                </a>
+              </Button>
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            If this persists: on Render, set <code className="rounded bg-muted px-1">FRONTEND_URL</code> to your exact site URL
+            (same as the browser address bar), redeploy the API, or confirm CORS allows your Vercel origin.
           </p>
         </CardContent>
       </Card>
