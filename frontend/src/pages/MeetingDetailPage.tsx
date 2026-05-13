@@ -34,6 +34,7 @@ export function MeetingDetailPage() {
       const { data: res } = await api.get<Detail>(`/meetings/${id}`);
       return res;
     },
+    staleTime: 30_000,
   });
 
   const finalizeMut = useMutation({

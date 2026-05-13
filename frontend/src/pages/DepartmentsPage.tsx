@@ -12,6 +12,7 @@ export function DepartmentsPage() {
       const { data } = await api.get<Array<{ id: string; name: string; slug: string; division_id: string }>>('/departments');
       return data;
     },
+    staleTime: 5 * 60_000,
   });
 
   return (

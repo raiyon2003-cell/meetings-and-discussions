@@ -37,6 +37,7 @@ export function MeetingsPage() {
       return body.data;
     },
     placeholderData: (prev) => prev,
+    staleTime: 45_000,
   });
 
   return (

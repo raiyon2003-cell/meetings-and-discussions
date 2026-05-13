@@ -18,6 +18,11 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2022',
+    cssCodeSplit: true,
+    sourcemap: false,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -34,6 +39,5 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 700,
   },
 });

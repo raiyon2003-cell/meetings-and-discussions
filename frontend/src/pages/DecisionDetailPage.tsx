@@ -38,6 +38,7 @@ export function DecisionDetailPage() {
       const { data: res } = await api.get<Detail>(`/decisions/${id}`);
       return res;
     },
+    staleTime: 30_000,
   });
 
   const deleteMut = useMutation({

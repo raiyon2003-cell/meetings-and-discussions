@@ -47,6 +47,7 @@ export function ActionEditorPage() {
       const { data: res } = await api.get<{ action: ActionItem }>(`/action-items/${id}`);
       return res.action;
     },
+    staleTime: 30_000,
   });
 
   const { data: meetings } = useQuery({
@@ -55,6 +56,7 @@ export function ActionEditorPage() {
       const { data: body } = await api.get<{ data: Array<{ id: string; title: string }> }>('/meetings', { params: { limit: 100 } });
       return body.data;
     },
+    staleTime: 60_000,
   });
 
   const { data: decisions } = useQuery({
@@ -63,6 +65,7 @@ export function ActionEditorPage() {
       const { data: body } = await api.get<{ data: Array<{ id: string; title: string }> }>('/decisions', { params: { limit: 100 } });
       return body.data;
     },
+    staleTime: 60_000,
   });
 
   const { data: users } = useQuery({
@@ -75,6 +78,7 @@ export function ActionEditorPage() {
         return [];
       }
     },
+    staleTime: 60_000,
   });
 
   const form = useForm<FormValues>({

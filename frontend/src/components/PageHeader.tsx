@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 type PageHeaderProps = {
@@ -8,7 +8,7 @@ type PageHeaderProps = {
   className?: string;
 };
 
-export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
+function PageHeaderInner({ title, description, actions, className }: PageHeaderProps) {
   return (
     <div
       className={cn(
@@ -24,3 +24,5 @@ export function PageHeader({ title, description, actions, className }: PageHeade
     </div>
   );
 }
+
+export const PageHeader = memo(PageHeaderInner);

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, memo, Suspense, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
@@ -223,7 +223,7 @@ export function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, accent }: StatDef) {
+const StatCard = memo(function StatCard({ label, value, icon: Icon, accent }: StatDef) {
   return (
     <Card
       className={cn(
@@ -243,4 +243,4 @@ function StatCard({ label, value, icon: Icon, accent }: StatDef) {
       </CardHeader>
     </Card>
   );
-}
+});

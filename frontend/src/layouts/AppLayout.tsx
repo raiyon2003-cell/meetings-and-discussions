@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -24,7 +24,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/hooks/useTheme';
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -95,10 +95,14 @@ export function AppLayout() {
     };
   }, [mobileOpen]);
 
-  const filteredNav = nav.filter((item) => {
-    if (!('roles' in item) || !item.roles) return true;
-    return (item.roles as readonly string[]).includes(roleSlug ?? '');
-  });
+  const filteredNav = useMemo(
+    () =>
+      nav.filter((item) => {
+        if (!('roles' in item) || !item.roles) return true;
+        return (item.roles as readonly string[]).includes(roleSlug ?? '');
+      }),
+    [roleSlug],
+  );
 
   async function handleLogout() {
     await supabase.auth.signOut();

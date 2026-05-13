@@ -27,6 +27,7 @@ export function ActionDetailPage() {
       );
       return res;
     },
+    staleTime: 30_000,
   });
 
   const updateMut = useMutation({

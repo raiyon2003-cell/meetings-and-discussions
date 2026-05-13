@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { PageLoading } from '@/components/PageLoading';
 
 export function ProtectedRoute() {
   const session = useAuthStore((s) => s.session);
@@ -8,7 +9,7 @@ export function ProtectedRoute() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading session…</div>
+        <PageLoading />
       </div>
     );
   }

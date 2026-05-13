@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import { memo, type ComponentProps } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { labelFrom, DECISION_STATUS, ACTION_STATUS, MEETING_STATUS, ACTION_PRIORITY } from '@/constants/enums';
 
@@ -67,7 +67,7 @@ const lists = {
   priority: ACTION_PRIORITY,
 } as const;
 
-export function StatusBadge({ kind, value }: { kind: Kind; value: string | undefined }) {
+function StatusBadgeInner({ kind, value }: { kind: Kind; value: string | undefined }) {
   const list = lists[kind];
   const label = labelFrom(list, value);
   let variant: BadgeVariant = 'outline';
@@ -82,3 +82,5 @@ export function StatusBadge({ kind, value }: { kind: Kind; value: string | undef
     </Badge>
   );
 }
+
+export const StatusBadge = memo(StatusBadgeInner);

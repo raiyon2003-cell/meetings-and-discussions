@@ -27,6 +27,7 @@ export function UsersPage() {
       return data;
     },
     enabled: role === 'admin',
+    staleTime: 60_000,
   });
 
   const { data: roles } = useQuery({
@@ -36,6 +37,7 @@ export function UsersPage() {
       return data;
     },
     enabled: role === 'admin',
+    staleTime: 15 * 60_000,
   });
 
   const { data: departments } = useQuery({
@@ -45,6 +47,7 @@ export function UsersPage() {
       return data;
     },
     enabled: role === 'admin',
+    staleTime: 5 * 60_000,
   });
 
   const patchMut = useMutation({

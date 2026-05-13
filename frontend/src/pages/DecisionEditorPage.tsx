@@ -47,6 +47,7 @@ export function DecisionEditorPage() {
       const { data: res } = await api.get<{ decision: Decision }>(`/decisions/${id}`);
       return res.decision;
     },
+    staleTime: 30_000,
   });
 
   const { data: divisions } = useQuery({
@@ -55,6 +56,7 @@ export function DecisionEditorPage() {
       const { data } = await api.get<Array<{ id: string; name: string }>>('/divisions');
       return data;
     },
+    staleTime: 5 * 60_000,
   });
 
   const { data: departments } = useQuery({
@@ -63,6 +65,7 @@ export function DecisionEditorPage() {
       const { data } = await api.get<Array<{ id: string; name: string; division_id: string }>>('/departments');
       return data;
     },
+    staleTime: 5 * 60_000,
   });
 
   const { data: meetings } = useQuery({
@@ -71,6 +74,7 @@ export function DecisionEditorPage() {
       const { data: body } = await api.get<{ data: Array<{ id: string; title: string }> }>('/meetings', { params: { limit: 100 } });
       return body.data;
     },
+    staleTime: 60_000,
   });
 
   const { data: users } = useQuery({
@@ -83,6 +87,7 @@ export function DecisionEditorPage() {
         return [];
       }
     },
+    staleTime: 60_000,
   });
 
   const form = useForm<FormValues>({

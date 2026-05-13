@@ -12,6 +12,7 @@ export function DivisionsPage() {
       const { data } = await api.get<Array<{ id: string; name: string; slug: string }>>('/divisions');
       return data;
     },
+    staleTime: 5 * 60_000,
   });
 
   return (

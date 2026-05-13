@@ -1,8 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { AppLayout } from '@/layouts/AppLayout';
 import { PageLoading } from '@/components/PageLoading';
+
+/** Lazy shell: keeps login and initial JS smaller (lucide-heavy layout loads after auth). */
+const AppLayout = lazy(() => import('@/layouts/AppLayout').then((m) => ({ default: m.AppLayout })));
 
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
@@ -35,7 +37,13 @@ export default function App() {
         }
       />
       <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout />}>
+        <Route
+          element={
+            <Suspense fallback={<PageLoading />}>
+              <AppLayout />
+            </Suspense>
+          }
+        >
           <Route
             index
             element={

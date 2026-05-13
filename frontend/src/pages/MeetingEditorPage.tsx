@@ -51,6 +51,7 @@ export function MeetingEditorPage() {
       const { data: res } = await api.get<{ meeting: Meeting }>(`/meetings/${id}`);
       return res.meeting;
     },
+    staleTime: 30_000,
   });
 
   const { data: divisions } = useQuery({
@@ -59,6 +60,7 @@ export function MeetingEditorPage() {
       const { data } = await api.get<Array<{ id: string; name: string }>>('/divisions');
       return data;
     },
+    staleTime: 5 * 60_000,
   });
 
   const { data: departments } = useQuery({
@@ -67,6 +69,7 @@ export function MeetingEditorPage() {
       const { data } = await api.get<Array<{ id: string; name: string; division_id: string }>>('/departments');
       return data;
     },
+    staleTime: 5 * 60_000,
   });
 
   const { data: users } = useQuery({
@@ -79,6 +82,7 @@ export function MeetingEditorPage() {
         return [];
       }
     },
+    staleTime: 60_000,
   });
 
   const form = useForm<FormValues>({
