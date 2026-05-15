@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus, RefreshCw, Calendar } from 'lucide-react';
+import { Plus, RefreshCw, Calendar, Pencil } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { Meeting } from '@/types/models';
 import { labelFrom, MEETING_TYPES, MEETING_STATUS } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
+import { canModifyMeeting, canCreateMeeting } from '@/lib/meetingAccess';
 import { useState } from 'react';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { PageHeader } from '@/components/PageHeader';
@@ -16,8 +17,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { PageLoading } from '@/components/PageLoading';
 
 export function MeetingsPage() {
-  const role = useAuthStore((s) => s.profile?.role?.slug);
-  const canCreate = role && !['view_only', 'management', 'team_member'].includes(role);
+  const profile = useAuthStore((s) => s.profile);
+  const canCreate = canCreateMeeting(profile);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('');
   const debouncedSearch = useDebouncedValue(search, 400);
@@ -57,7 +58,7 @@ export function MeetingsPage() {
         }
       />
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/50 p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="filter-toolbar">
         <Input
           placeholder="Search by title…"
           value={search}
@@ -89,7 +90,7 @@ export function MeetingsPage() {
                 <TableHead className="hidden lg:table-cell">Type</TableHead>
                 <TableHead>Scheduled</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[88px]" />
+                <TableHead className="w-[140px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,10 +106,20 @@ export function MeetingsPage() {
                   <TableCell>
                     <StatusBadge kind="meeting" value={m.status} />
                   </TableCell>
-                  <TableCell>
-                    <Link className="link-subtle text-sm" to={`/meetings/${m.id}`}>
-                      Open
-                    </Link>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link className="link-subtle text-sm" to={`/meetings/${m.id}`}>
+                        View
+                      </Link>
+                      {canModifyMeeting(profile, m) ? (
+                        <Button asChild variant="outline" size="sm" className="h-8 gap-1 px-2.5 shadow-sm">
+                          <Link to={`/meetings/${m.id}/edit`}>
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
+                            Edit
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

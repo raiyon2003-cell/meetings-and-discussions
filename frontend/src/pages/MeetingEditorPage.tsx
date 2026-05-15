@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { canModifyMeeting } from '@/lib/meetingAccess';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,13 +16,18 @@ import { MEETING_TYPES, MEETING_STATUS } from '@/constants/enums';
 import type { Meeting } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
 import { PageHeader } from '@/components/PageHeader';
+import { PageLoading } from '@/components/PageLoading';
+import { MeetingAttendeesEditor, type AttendeeRow } from '@/components/MeetingAttendeesEditor';
 
 const schema = z.object({
   title: z.string().min(1),
   meeting_type: z.string().min(1),
   scheduled_at: z.string().min(1),
   location: z.string().optional(),
-  online_meeting_link: z.string().optional(),
+  online_meeting_link: z
+    .string()
+    .optional()
+    .refine((v) => !v || v === '' || /^https?:\/\/.+/i.test(v), 'Enter a valid URL (https://…)'),
   division_id: z.string().uuid(),
   department_id: z.string().uuid(),
   related_project_client: z.string().optional(),
@@ -43,16 +49,22 @@ export function MeetingEditorPage() {
   const qc = useQueryClient();
   const profile = useAuthStore((s) => s.profile);
   const isNew = !id;
+  const [attendees, setAttendees] = useState<AttendeeRow[]>([]);
 
-  const { data: meeting } = useQuery({
-    queryKey: ['meeting', id],
-    enabled: !isNew,
+  const { data: detail, isLoading: detailLoading } = useQuery({
+    queryKey: ['meeting-detail', id],
+    enabled: !isNew && Boolean(id),
     queryFn: async () => {
-      const { data: res } = await api.get<{ meeting: Meeting }>(`/meetings/${id}`);
-      return res.meeting;
+      const { data: res } = await api.get<{
+        meeting: Meeting;
+        attendees: Array<{ user_id: string; status: 'present' | 'absent' }>;
+      }>(`/meetings/${id}`);
+      return res;
     },
     staleTime: 30_000,
   });
+
+  const meeting = detail?.meeting;
 
   const { data: divisions } = useQuery({
     queryKey: ['divisions'],
@@ -129,8 +141,14 @@ export function MeetingEditorPage() {
         risks_identified: meeting.risks_identified ?? '',
         status: meeting.status,
       });
+      setAttendees(
+        (detail?.attendees || []).map((a) => ({
+          user_id: a.user_id,
+          status: a.status === 'absent' ? 'absent' : 'present',
+        })),
+      );
     }
-  }, [meeting, form]);
+  }, [meeting, detail?.attendees, form]);
 
   const saveMutation = useMutation({
     mutationFn: async (values: FormValues) => {
@@ -147,33 +165,76 @@ export function MeetingEditorPage() {
         concerns_raised: values.concerns_raised || null,
         risks_identified: values.risks_identified || null,
       };
+      let meetingId: string;
       if (isNew) {
         const { data } = await api.post<Meeting>('/meetings', payload);
-        return data;
+        meetingId = data.id;
+      } else {
+        const { data } = await api.patch<Meeting>(`/meetings/${id}`, payload);
+        meetingId = data.id;
       }
-      const { data } = await api.patch<Meeting>(`/meetings/${id}`, payload);
-      return data;
+      await api.put(`/meetings/${meetingId}/attendees`, { attendees });
+      return { id: meetingId };
     },
     onSuccess: (row) => {
-      toast.success('Meeting saved');
-      qc.invalidateQueries({ queryKey: ['meetings'] });
-      if (isNew) navigate(`/meetings/${row.id}`);
+      toast.success(isNew ? 'Meeting created' : 'Meeting updated');
+      void qc.invalidateQueries({ queryKey: ['meetings'] });
+      void qc.invalidateQueries({ queryKey: ['meeting-detail', row.id] });
+      void qc.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      navigate(isNew ? `/meetings/${row.id}` : `/meetings/${row.id}`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function onSubmit(values: FormValues) {
+    if (!isNew && !window.confirm('Save changes to this meeting?')) return;
+    saveMutation.mutate(values);
+  }
+
   const divisionId = form.watch('division_id');
   const deptOptions = (departments || []).filter((d) => d.division_id === divisionId);
+  const canEdit = isNew || canModifyMeeting(profile, meeting);
+
+  if (!isNew && detailLoading) return <PageLoading />;
+
+  if (!isNew && meeting && !canEdit) {
+    return (
+      <Card className="border-destructive/30 bg-destructive/[0.06]">
+        <CardHeader>
+          <CardTitle className="text-destructive">You cannot edit this meeting</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your role does not allow editing this record. Contact an admin or the meeting owner.
+          </p>
+          <Button asChild variant="outline">
+            <Link to={`/meetings/${meeting.id}`}>Back to meeting</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-      <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8">
       <PageHeader
         title={isNew ? 'New meeting' : 'Edit meeting'}
-        description="All fields align with the SegWitz operational record. Required fields must be complete before save."
+        description={
+          isNew
+            ? 'All fields align with the SegWitz operational record. Required fields must be complete before save.'
+            : 'Update meeting details and participants. Unchanged fields are preserved on save.'
+        }
+        eyebrow={isNew ? 'Create' : 'Edit'}
       />
 
+      {!isNew && meeting?.updated_at ? (
+        <p className="-mt-4 text-xs text-muted-foreground">
+          Last updated {new Date(meeting.updated_at).toLocaleString()}
+        </p>
+      ) : null}
+
       <form
-        onSubmit={form.handleSubmit((v) => saveMutation.mutate(v))}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6"
       >
         <Card>
@@ -184,6 +245,9 @@ export function MeetingEditorPage() {
             <div className="md:col-span-2 space-y-2">
               <Label>Title</Label>
               <Input {...form.register('title')} />
+              {form.formState.errors.title ? (
+                <p className="text-xs text-red-600 dark:text-red-400">{form.formState.errors.title.message}</p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label>Type</Label>
@@ -289,11 +353,29 @@ export function MeetingEditorPage() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Participants</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MeetingAttendeesEditor
+              users={users || []}
+              value={attendees}
+              onChange={setAttendees}
+              disabled={saveMutation.isPending}
+            />
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-wrap gap-3">
           <Button type="submit" disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? 'Saving…' : 'Save'}
+            {saveMutation.isPending ? 'Saving…' : isNew ? 'Create meeting' : 'Save changes'}
           </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(isNew ? '/meetings' : `/meetings/${id}`)}
+          >
             Cancel
           </Button>
         </div>

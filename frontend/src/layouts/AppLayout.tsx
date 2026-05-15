@@ -190,7 +190,7 @@ export function AppLayout() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          'relative z-30 hidden flex-shrink-0 flex-col border-r border-white/10 bg-sidebar text-sidebar-foreground shadow-brand transition-[width] duration-200 ease-out md:flex',
+          'relative z-30 hidden flex-shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95 text-sidebar-foreground shadow-brand ring-1 ring-white/[0.04] transition-[width] duration-200 ease-out md:flex',
           collapsed ? 'md:w-[4.75rem]' : 'md:w-64',
         )}
       >
@@ -216,7 +216,7 @@ export function AppLayout() {
             aria-label="Close menu"
             onClick={closeMobile}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(20rem,88vw)] flex-col bg-sidebar text-sidebar-foreground shadow-2xl animate-fade-in md:hidden">
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[min(20rem,88vw)] flex-col bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95 text-sidebar-foreground shadow-2xl ring-1 ring-white/[0.04] animate-fade-in md:hidden">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <span className="text-sm font-semibold text-sidebar-foreground">Menu</span>
               <Button
@@ -237,7 +237,7 @@ export function AppLayout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar — mobile + desktop */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border/80 bg-card/90 px-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/75 md:h-[3.25rem] md:px-6">
+        <header className="glass-header sticky top-0 z-20 flex h-14 items-center justify-between gap-3 px-3 md:h-[3.25rem] md:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button
               type="button"
@@ -283,11 +283,13 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-10 lg:px-10">
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
+        <main className="workspace-canvas flex-1 overflow-x-hidden overflow-y-auto">
+          <div className="mx-auto max-w-[1600px] p-3 md:p-5 lg:p-6">
+            <div className="workspace-inner min-h-[min(100vh,64rem)]">
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
+            </div>
           </div>
         </main>
       </div>

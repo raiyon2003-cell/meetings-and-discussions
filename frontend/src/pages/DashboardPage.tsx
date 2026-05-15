@@ -11,7 +11,9 @@ import {
   AlertTriangle,
   ArrowUpRight,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, apiDirectOriginForHealth } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
+import { canModifyMeeting } from '@/lib/meetingAccess';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Meeting, Decision } from '@/types/models';
@@ -48,9 +50,8 @@ type StatDef = {
 
 export function DashboardPage() {
   const qc = useQueryClient();
-  const apiOrigin = import.meta.env.VITE_API_URL
-    ? String(import.meta.env.VITE_API_URL).replace(/\/$/, '')
-    : '';
+  const profile = useAuthStore((s) => s.profile);
+  const apiOrigin = apiDirectOriginForHealth();
 
   const { data, isLoading, error, isPlaceholderData } = useQuery({
     queryKey: ['dashboard-summary'],
@@ -91,7 +92,7 @@ export function DashboardPage() {
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-destructive">Dashboard could not load</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Data comes from your API. Fix the configuration below, then refresh this page.
+              Data comes from your API. Fix the issue below, then refresh or use Retry.
             </p>
           </div>
         </CardHeader>
@@ -106,14 +107,23 @@ export function DashboardPage() {
             {apiOrigin ? (
               <Button type="button" variant="outline" asChild>
                 <a href={`${apiOrigin}/health`} target="_blank" rel="noopener noreferrer">
-                  Open API health (wake Render)
+                  {import.meta.env.DEV ? 'Open API health (local)' : 'Open API health (wake Render)'}
                 </a>
               </Button>
             ) : null}
           </div>
           <p className="text-xs text-muted-foreground">
-            If this persists: on Render, set <code className="rounded bg-muted px-1">FRONTEND_URL</code> to your exact site URL
-            (same as the browser address bar), redeploy the API, or confirm CORS allows your Vercel origin.
+            {import.meta.env.DEV ? (
+              <>
+                Local dev uses the Vite proxy (<code className="rounded bg-muted px-1">/api</code> → port 4000). Production:
+                set <code className="rounded bg-muted px-1">FRONTEND_URL</code> on the API host if you see CORS errors.
+              </>
+            ) : (
+              <>
+                If this persists: on Render, set <code className="rounded bg-muted px-1">FRONTEND_URL</code> to your exact
+                site URL (same as the browser address bar), redeploy the API, or confirm CORS allows your Vercel origin.
+              </>
+            )}
           </p>
         </CardContent>
       </Card>
@@ -179,14 +189,24 @@ export function DashboardPage() {
                       <TableCell className="hidden text-muted-foreground md:table-cell">
                         {new Date(m.scheduled_at).toLocaleString()}
                       </TableCell>
-                      <TableCell>
-                        <Link
-                          className="inline-flex items-center gap-0.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                          to={`/meetings/${m.id}`}
-                        >
-                          View
-                          <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden />
-                        </Link>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            className="inline-flex items-center gap-0.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                            to={`/meetings/${m.id}`}
+                          >
+                            View
+                            <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden />
+                          </Link>
+                          {canModifyMeeting(profile, m) ? (
+                            <Link
+                              className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                              to={`/meetings/${m.id}/edit`}
+                            >
+                              Edit
+                            </Link>
+                          ) : null}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

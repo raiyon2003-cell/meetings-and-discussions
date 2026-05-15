@@ -10,6 +10,12 @@ export default defineConfig({
     },
   },
   server: {
+    /** Listen on all interfaces so http://localhost:5173 and LAN URLs work reliably. */
+    host: true,
+    port: 5173,
+    strictPort: false,
+    /** Open the system browser when you run `npm run dev` (disable with BROWSER=none). */
+    open: true,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:4000',

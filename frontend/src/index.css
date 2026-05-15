@@ -3,52 +3,52 @@
 @tailwind utilities;
 
 /**
- * SegWitz — enterprise UI tokens (light + dark)
- * Typeface: Source Sans 3
+ * SegWitz — premium SaaS UI tokens (light + dark)
+ * Typeface: Source Sans 3 · tuned for dashboard clarity
  */
 
 @layer base {
   :root {
-    --background: 40 14% 96%;
-    --foreground: 152 22% 16%;
+    --background: 220 18% 97%;
+    --foreground: 222 22% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 152 22% 16%;
-    --muted: 152 12% 92%;
-    --muted-foreground: 152 10% 38%;
-    --border: 152 12% 86%;
-    --input: 152 12% 86%;
+    --card-foreground: 222 22% 14%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 40%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
     --primary: 186 47% 28%;
     --primary-foreground: 180 25% 98%;
-    --ring: 186 47% 36%;
-    --radius: 0.625rem;
-    --accent: 118 19% 40%;
+    --ring: 186 47% 38%;
+    --radius: 0.75rem;
+    --accent: 118 19% 38%;
     --accent-foreground: 180 25% 98%;
-    --sidebar: 192 78% 14%;
-    --sidebar-foreground: 180 25% 97%;
-    --sidebar-muted: 186 18% 72%;
-    --sidebar-active: 186 42% 30%;
-    --shadow-color: 192 40% 20%;
+    --sidebar: 192 76% 13%;
+    --sidebar-foreground: 186 20% 97%;
+    --sidebar-muted: 186 16% 68%;
+    --sidebar-active: 186 44% 32%;
+    --shadow-color: 220 30% 18%;
   }
 
   .dark {
-    --background: 222 24% 7%;
+    --background: 222 24% 6%;
     --foreground: 210 25% 96%;
-    --card: 222 22% 10%;
+    --card: 222 22% 9%;
     --card-foreground: 210 25% 96%;
-    --muted: 217 20% 16%;
-    --muted-foreground: 215 14% 62%;
-    --border: 217 18% 20%;
-    --input: 217 18% 20%;
-    --primary: 186 42% 42%;
-    --primary-foreground: 192 85% 8%;
-    --ring: 186 45% 48%;
-    --accent: 118 22% 38%;
+    --muted: 217 22% 14%;
+    --muted-foreground: 215 14% 60%;
+    --border: 217 16% 18%;
+    --input: 217 16% 18%;
+    --primary: 186 42% 44%;
+    --primary-foreground: 192 85% 7%;
+    --ring: 186 48% 50%;
+    --accent: 118 22% 36%;
     --accent-foreground: 180 25% 98%;
-    --sidebar: 192 45% 8%;
-    --sidebar-foreground: 186 15% 94%;
-    --sidebar-muted: 186 14% 58%;
-    --sidebar-active: 186 38% 26%;
-    --shadow-color: 222 40% 4%;
+    --sidebar: 192 48% 7%;
+    --sidebar-foreground: 186 18% 94%;
+    --sidebar-muted: 186 12% 55%;
+    --sidebar-active: 186 40% 26%;
+    --shadow-color: 222 45% 3%;
   }
 
   html {
@@ -57,6 +57,7 @@
 
   body {
     @apply bg-background text-foreground antialiased font-sans transition-colors duration-200;
+    font-feature-settings: 'kern' 1, 'liga' 1;
     margin: 0;
     min-height: 100vh;
   }
@@ -68,7 +69,7 @@
 
 @layer components {
   .select-native {
-    @apply flex h-10 w-full cursor-pointer appearance-none rounded-md border border-input bg-background px-3 pr-9 text-sm text-foreground shadow-sm transition-[border-color,box-shadow] duration-150;
+    @apply flex h-10 w-full cursor-pointer appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-sm text-foreground shadow-sm transition-[border-color,box-shadow] duration-200;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -82,11 +83,34 @@
   }
 
   .link-subtle {
-    @apply font-medium text-primary underline-offset-4 transition-colors hover:text-primary/80 hover:underline;
+    @apply font-medium text-primary underline-offset-4 transition-colors duration-150 hover:text-primary/85 hover:underline;
   }
 
   .surface-table {
-    @apply overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm dark:border-border/80 dark:shadow-none;
+    @apply overflow-hidden rounded-xl border border-border/60 bg-card/90 shadow-sm ring-1 ring-black/[0.02] dark:border-border/70 dark:bg-card dark:shadow-none dark:ring-white/[0.04];
+  }
+
+  /** Main workspace: subtle depth + optional dot texture */
+  .workspace-canvas {
+    @apply relative min-h-full;
+    background-image: radial-gradient(hsl(var(--foreground) / 0.045) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .dark .workspace-canvas {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+  }
+
+  .workspace-inner {
+    @apply relative rounded-2xl border border-border/50 bg-gradient-to-b from-card/70 via-background/80 to-background/95 p-4 shadow-sm backdrop-blur-[2px] dark:from-card/40 dark:via-background/90 dark:to-background dark:border-border/40 md:p-6 lg:p-8;
+  }
+
+  .filter-toolbar {
+    @apply flex flex-col gap-3 rounded-xl border border-border/50 bg-card/60 p-4 shadow-sm backdrop-blur-sm dark:border-border/60 dark:bg-card/40 sm:flex-row sm:flex-wrap sm:items-center;
+  }
+
+  .glass-header {
+    @apply border-b border-border/50 bg-background/75 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/65 dark:bg-background/80 dark:supports-[backdrop-filter]:bg-background/70;
   }
 }
 

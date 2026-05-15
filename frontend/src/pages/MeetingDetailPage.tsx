@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { Attachment, Decision, Meeting, ActionItem } from '@/types/models';
 import { labelFrom, MEETING_TYPES } from '@/constants/enums';
 import { useAuthStore } from '@/store/authStore';
+import { canModifyMeeting } from '@/lib/meetingAccess';
 import { Input } from '@/components/ui/input';
 import { PageLoading } from '@/components/PageLoading';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -26,7 +27,8 @@ export function MeetingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const role = useAuthStore((s) => s.profile?.role?.slug);
+  const profile = useAuthStore((s) => s.profile);
+  const role = profile?.role?.slug;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['meeting-detail', id],
@@ -92,7 +94,7 @@ export function MeetingDetailPage() {
   }
 
   const m = data.meeting;
-  const canEdit = role && !['view_only', 'management', 'team_member'].includes(role);
+  const canEdit = canModifyMeeting(profile, m);
 
   return (
     <div className="space-y-10">
@@ -103,12 +105,17 @@ export function MeetingDetailPage() {
             <StatusBadge kind="meeting" value={m.status} />
           </div>
           <p className="text-sm text-muted-foreground md:text-[15px]">{labelFrom(MEETING_TYPES, m.meeting_type)}</p>
+          {m.updated_at ? (
+            <p className="text-xs text-muted-foreground">
+              Last updated {new Date(m.updated_at).toLocaleString()}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {canEdit && (
             <>
-              <Button asChild variant="outline" className="shadow-sm">
-                <Link to={`/meetings/${m.id}/edit`}>Edit</Link>
+              <Button asChild variant="default" className="shadow-sm">
+                <Link to={`/meetings/${m.id}/edit`}>Edit meeting</Link>
               </Button>
               {m.status === 'draft' && (
                 <Button className="shadow-sm" onClick={() => finalizeMut.mutate()} disabled={finalizeMut.isPending}>

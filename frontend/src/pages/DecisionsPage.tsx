@@ -51,7 +51,7 @@ export function DecisionsPage() {
         }
       />
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/50 p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="filter-toolbar">
         <Input
           placeholder="Search by title…"
           value={search}

@@ -5,32 +5,57 @@ import { supabase } from '@/lib/supabase';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
+const BOOTSTRAP_TIMEOUT_MS = 8_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error('Auth bootstrap timed out')), ms);
+    }),
+  ]);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const setSession = useAuthStore((s) => s.setSession);
   const setProfile = useAuthStore((s) => s.setProfile);
   const setLoading = useAuthStore((s) => s.setLoading);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadProfileFromApi() {
       try {
         const { data } = await api.get<{ user: unknown }>('/me');
-        setProfile(data.user as never);
+        if (!cancelled) setProfile(data.user as never);
       } catch {
-        setProfile(null);
+        if (!cancelled) setProfile(null);
       }
     }
 
     async function bootstrap() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      if (session) {
-        await loadProfileFromApi();
-      } else {
-        setProfile(null);
+      try {
+        const {
+          data: { session },
+        } = await withTimeout(supabase.auth.getSession(), BOOTSTRAP_TIMEOUT_MS);
+        if (cancelled) return;
+        setSession(session);
+        if (session) {
+          await loadProfileFromApi();
+        } else {
+          setProfile(null);
+        }
+      } catch (e) {
+        console.error('[SegWitz] Auth bootstrap failed', e);
+        if (!cancelled) {
+          await supabase.auth.signOut().catch(() => undefined);
+          setSession(null);
+          setProfile(null);
+        }
+      } finally {
+        // Always clear loading (avoids stuck disabled login in React Strict Mode remounts).
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     void bootstrap();
@@ -39,8 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       setSession(session);
-      // INITIAL_SESSION duplicates work already done in bootstrap(getSession + /me).
-      // TOKEN_REFRESHED does not require reloading profile for this app.
       if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
         return;
       }
@@ -51,7 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [setSession, setProfile, setLoading]);
 
   return children;
